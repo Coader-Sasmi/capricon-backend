@@ -64,6 +64,37 @@ app.get("/get-json/:filename", (req, res) => {
   });
 });
 
+//Backend task
+app.get("/", (req, res) => {
+  const file = fs.readFileSync("./uploads/1727359804374-response.json");
+  const data = file.toString() && JSON.parse(file.toString());
+  const fuelEvents = [];
+
+  let totalFuelConsumed = 0;
+
+  data.sort((a, b) => a.timestamp - b.timestamp);
+
+  let previousFuelLevel = data[0].fuel_level;
+
+  for (let i = 1; i < data.length; i++) {
+    const currentData = data[i];
+
+    if (currentData.fuel_level > previousFuelLevel) {
+      fuelEvents.push({
+        start_time: new Date(data[i - 1].timestamp).toLocaleString(),
+        end_time: new Date(currentData.timestamp).toLocaleString(),
+        fuel_filed: currentData.fuel_level - previousFuelLevel,
+        location: currentData.location,
+      });
+    }
+
+    totalFuelConsumed += previousFuelLevel - currentData.fuel_level;
+    previousFuelLevel = currentData.fuel_level;
+  }
+
+  res.json({ fuelEvents, totalFuelConsumed: totalFuelConsumed });
+});
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
